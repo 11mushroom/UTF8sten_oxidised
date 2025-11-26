@@ -1,0 +1,15 @@
+[package]
+name = "example"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name="encoder"
+path="src/encoder.rs"
+
+[[bin]]
+name="decoder"
+path="src/decoder.rs"
+
+[dependencies]
+UTF8={path="../UTF8"}
