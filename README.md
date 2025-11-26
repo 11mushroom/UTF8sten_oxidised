@@ -24,7 +24,7 @@ it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
 
   `encoder` and `decoder` binaries will be in `example/target/release` directory
 
-# using encoder and decoder scripts
+# usage of encoder and decoder scripts
   ```bash
   ./encoder "your message"
   ```
