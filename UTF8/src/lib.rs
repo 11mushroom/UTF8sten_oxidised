@@ -18,28 +18,27 @@
 
 use std::char;
 
-const FFU32 :u32=0xffffffff;
-const OCTPR :u32=0b10000000;
-const PB2   :u32=0b11000000;
-const PB3   :u32=0b11100000;
-const PB4   :u32=0b11110000;
-const MASK3 :u32=0b00000111;
-const MASK4 :u32=0b00001111;
-const MASK5 :u32=0b00011111;
-const MASK6 :u32=0b00111111;
-const MASK8 :u32=0b11111111;
-const RMASK2:u32=0b11000000;
-const RMASK3:u32=0b11100000;
-const RMASK4:u32=0b11110000;
-const RMASK5:u32=0b11111000;
+const FFU32  :u32=0xffffffff;
+const OCTPR  :u32=0b10000000;
+const PB2    :u32=0b11000000;
+const PB3    :u32=0b11100000;
+const PB4    :u32=0b11110000;
+const MASK3  :u32=0b00000111;
+const MASK4  :u32=0b00001111;
+const MASK5  :u32=0b00011111;
+const MASK6  :u32=0b00111111;
+const MASK8  :u32=0b11111111;
+const RMASK2 :u32=0b11000000;
+const RMASK3 :u32=0b11100000;
+const RMASK4 :u32=0b11110000;
+const RMASK5 :u32=0b11111000;
+
+const ENC1BT_BASE:u32=0x100 ; //base for encoding single byte
 
 ///function to calculate amount of encoded data will take in bytes
 
-pub fn getEnLen(len: u32) -> usize {
-  let mut res:usize;
-  res=((len/3)*6) as usize;
-  res+=((len%3)*3) as usize;
-  return res;
+pub fn getEnLen(len: usize) -> usize {
+  (len/3)*6+(len%3)*2
 }
 
 ///function to calculate amount of decoded data will take in bytes
@@ -136,7 +135,8 @@ pub fn UTF8_den( string:&String ) -> Vec<u32> {
 
 pub fn enSten(arr: &[u8]) -> Vec<char> {
   let len:usize=arr.len();
-  let enLen:usize=(len*2)/3+ ((len*2)%3>0) as usize;//getEnLen(len);
+  let enLen:usize=(len/3)*2+ len%3;
+  let normal_len:usize=len-len%3;
 
   let mut res:Vec<char>=vec![0 as char;enLen];
 
@@ -149,7 +149,7 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
   let mut dataI:usize=0;
   let mut i:usize=0;
 
-  while i < len {
+  while i < normal_len {
     if bits<=0 {
       bits=8;
     }
@@ -182,6 +182,12 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
     }
 
     subB%=12;
+  }
+
+  while i<len {
+    res[dataI]=char::from_u32(ENC1BT_BASE|arr[i] as u32).expect("[enSten()]: failed to encode single byte");
+    i+=1;
+    dataI+=1;
   }
 
   if dataI < enLen {
@@ -373,37 +379,79 @@ pub mod Block {
 
 #[cfg(test)]
 mod tests {
+    use std::result;
+
     use super::*;
 
     #[test]
     fn enstenning_works() {
         eprintln!("\nSTART enSten");
 
-        let result = enSten("hello!".as_bytes());
-        eprintln!("result: {}", result.iter().collect::<String>());
+        let buff:Vec<&str>=vec!["hello!", "hello", "hell"];
+        let need:Vec<String>=["蕨蛆转舖", "蕨蛆Ŭů", "蕨蛆Ŭ"].into_iter().map(|s| String::from(s)).collect();
+        assert_eq!(buff.len(), need.len());
 
-        let buff=[34152_u32, 34502_u32, 36716_u32, 33302_u32];
-        let need:Vec<char>=buff.iter()
-            .map(|code| char::from_u32(*code).expect("err"))
-            .collect();
+        for i in 0..buff.len() {
+          let res = enSten(buff[i].as_bytes());
+          eprintln!("result{i}: {}", res.iter().collect::<String>());
 
-        eprintln!("need:   {}", need.iter().collect::<String>());
+          eprintln!("need{i}:   {}", need[i]);
 
-        assert_eq!(result, need);
+          assert_eq!(res, need[i].chars().collect::<Vec<char>>());
+        };
     }
 
     #[test]
     fn destenning_works() {
         eprintln!("\nSTART deSten");
 
-        let buff=[34152_u32, 34502_u32, 36716_u32, 33302_u32];
-        let need="hello!".as_bytes();
+        let buff:Vec<String>=["蕨蛆转舖", "蕨蛆Ŭů", "蕨蛆Ŭ"].into_iter().map(|s| String::from(s)).collect();
+        let need:Vec<&str>=vec!["hello!", "hello", "hell"];
+        assert_eq!(buff.len(), need.len());
 
-        let result = deSten(&buff);
+        for i in 0..buff.len() {
+          let res = deSten(&buff[i].chars().map(|c| c as u32).collect::<Vec<u32>>());
+          eprintln!("result{i}: {}", String::from_utf8(res.clone()).expect("deSten test failed"));
 
-        eprintln!("result: {}", result.iter().map(|c| *c as char).collect::<String>());
-        eprintln!("need:   {}", need.iter().map(|c| *c as char).collect::<String>());
+          eprintln!("need{i}:   {}", need[i]);
 
-        assert_eq!(result, need);
+          assert_eq!(res, need[i].as_bytes());
+        };
+    }
+    
+    #[test]
+    fn enstenning_v2_works() {
+        eprintln!("\nSTART enSten2");
+
+        let buff:Vec<&str>=vec!["hello!", "hello"];
+        let need:Vec<String>=["𦕨𦱬𢅯", "𦕨𦱬ů"].into_iter().map(|s| String::from(s)).collect();
+        assert_eq!(buff.len(), need.len());
+
+        for i in 0..buff.len() {
+          let res = enSten2(buff[i].as_bytes());
+          eprintln!("result{i}: {}", res.iter().collect::<String>());
+
+          eprintln!("need{i}:   {}", need[i]);
+
+          assert_eq!(res, need[i].chars().collect::<Vec<char>>());
+        };
+    }
+
+    #[test]
+    fn destenning_v2_works() {
+        eprintln!("\nSTART deSten2");
+
+        let buff:Vec<String>=["𦕨𦱬𢅯", "𦕨𦱬ů"].into_iter().map(|s| String::from(s)).collect();
+        let need:Vec<&str>=vec!["hello!", "hello"];
+        assert_eq!(buff.len(), need.len());
+
+        for i in 0..buff.len() {
+          let res = deSten2(&buff[i].chars().map(|c| c as u32).collect::<Vec<u32>>());
+          eprintln!("result{i}: {}", String::from_utf8(res.clone()).expect("deSten2 test failed"));
+
+          eprintln!("need{i}:   {}", need[i]);
+
+          assert_eq!(res, need[i].as_bytes());
+        };
     }
 }
