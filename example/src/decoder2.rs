@@ -16,26 +16,22 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-//use std::time::Instant;
 use std::io::{Write,Read};
 
-const BUFF_SIZE:usize=510;
+const BUFF_SIZE:usize=512;
 
 fn main() {
-    //let start=Instant::now();
     let args:Vec<String>=std::env::args().collect();
+    let mut stdout=std::io::stdout();
+
+    let force_lossy_decode=false;
 
     if args.len()<2 {
       let mut stdin=std::io::stdin();
-      let mut stdout=std::io::stdout();
 
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
-      let mut read_len:usize;
-
       loop{
-        read_len=0;
-
-        //this loop ensures that buffer is full except last chunk of data
+        let mut read_len:usize = 0;
         loop { 
           read_len += match stdin.read(&mut buff[read_len..]){
             Ok(0) => break,
@@ -46,16 +42,24 @@ fn main() {
             break
           }
         }
-        /*eprintln!("read {} bytes", read_len);*/
+        //eprintln!("read {} bytes", read_len);
 
-        if read_len==0 {
-          break
-        }
 
-        let result:String = UTF8::enSten(&buff[..read_len]).iter().collect();
-        let _ = stdout.write_all(result.as_bytes());
+        let codepoints:Vec<u32>=match String::from_utf8(Vec::from(&buff[..read_len])) {
+            Ok(s) => s.chars().map(|c| c as u32).collect::<Vec<u32>>(),
+            Err(e) => if force_lossy_decode {
+                        String::from_utf8_lossy(&buff[..read_len]).chars().map(|c| c as u32).collect::<Vec<u32>>()
+                      } else {
+                        println!("failed to convert raw bytes into ecceptable for decoder format");
+                        println!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
+                        println!("to enable it, change value of `force_lossy_decode` variable to `true`");
+                        panic!("{}", e);
+                      }
+          };
 
-        //quits loop after reaching last chunk of data
+        let result:Vec<u8> = UTF8::deSten2(&codepoints);
+        let _ = stdout.write_all(&result);
+
         if read_len<BUFF_SIZE {
           break
         }
@@ -64,9 +68,8 @@ fn main() {
       println!("");
 
     } else {
-      let enstenned:Vec<char>=UTF8::enSten(args[1].as_bytes());
-      println!("{}", enstenned.iter().collect::<String>());
-
+      let destenned:Vec<u8>=UTF8::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>());
+      let _ = stdout.write_all(&destenned);
+      println!("");
     }
-    //eprintln!("main function were running {:?}", start.elapsed());
 }

@@ -18,8 +18,9 @@
 
 //use std::time::Instant;
 use std::io::{Write,Read};
+use UTF8::Block;
 
-const BUFF_SIZE:usize=510;
+const BUFF_SIZE:usize=512;
 
 fn main() {
     //let start=Instant::now();
@@ -52,7 +53,15 @@ fn main() {
           break
         }
 
-        let result:String = UTF8::enSten(&buff[..read_len]).iter().collect();
+        //checks if data can be encoded in a valid output
+        if !Block::v2_encode_valid(&buff[..read_len]) {
+          eprintln!("cannot be encoded with second version");
+          eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2 to work correctly");
+          eprintln!("or use v1 encoder");
+          return;
+        }
+
+        let result:String = UTF8::enSten2(&buff[..read_len]).iter().collect();
         let _ = stdout.write_all(result.as_bytes());
 
         //quits loop after reaching last chunk of data
@@ -64,7 +73,15 @@ fn main() {
       println!("");
 
     } else {
-      let enstenned:Vec<char>=UTF8::enSten(args[1].as_bytes());
+      //checks if data can be encoded in a valid output
+      if !Block::v2_encode_valid(args[1].as_bytes()) {
+        eprintln!("cannot be encoded with second version");
+        eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2");
+        eprintln!("or use v1 encoder");
+        return;
+      }
+
+      let enstenned:Vec<char>=UTF8::enSten2(args[1].as_bytes());
       println!("{}", enstenned.iter().collect::<String>());
 
     }

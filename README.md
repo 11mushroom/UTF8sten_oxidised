@@ -10,7 +10,7 @@ it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
   git clone httos://github.com/11mushroom/UTF8sten_oxidised.git
   ```
 
-- to build encoder and decoder:
+- to build encoders and decoders:
   
   go to the `example` directory
   ```
@@ -22,7 +22,7 @@ it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
   cargo build --release
   ```
 
-  `encoder` and `decoder` binaries will be in `example/target/release` directory
+  `encoder`,`encoder2` and `decoder`,`decoder2` binaries will be in `example/target/release` directory
 
 # usage of encoder and decoder scripts
   ```bash
@@ -55,5 +55,9 @@ it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
   fabric
 
   ```
-  
+
+# usage of encoder2 and decoder2 scripts
+  almost the same as usage of `encoder` and `decoder`
+
+  `decoder` can decode output of both `encoder` and `encoder2`
 

@@ -1,6 +1,6 @@
 [package]
 name = "example"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [[bin]]
@@ -8,8 +8,16 @@ name="encoder"
 path="src/encoder.rs"
 
 [[bin]]
+name="encoder2"
+path="src/encoder2.rs"
+
+[[bin]]
 name="decoder"
 path="src/decoder.rs"
+
+[[bin]]
+name="decoder2"
+path="src/decoder2.rs"
 
 [dependencies]
 UTF8={path="../UTF8"}

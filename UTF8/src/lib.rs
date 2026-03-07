@@ -16,6 +16,8 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use std::char;
+
 const FFU32 :u32=0xffffffff;
 const OCTPR :u32=0b10000000;
 const PB2   :u32=0b11000000;
@@ -31,7 +33,7 @@ const RMASK3:u32=0b11100000;
 const RMASK4:u32=0b11110000;
 const RMASK5:u32=0b11111000;
 
-//function to calculate amount of encoded data will take in bytes
+///function to calculate amount of encoded data will take in bytes
 
 pub fn getEnLen(len: u32) -> usize {
   let mut res:usize;
@@ -40,7 +42,7 @@ pub fn getEnLen(len: u32) -> usize {
   return res;
 }
 
-//function to calculate amount of decoded data will take in bytes
+///function to calculate amount of decoded data will take in bytes
 
 pub fn getStenLen(arr: &[u32]) -> usize {
   let mut res:usize=0;
@@ -66,12 +68,12 @@ pub fn getStenLen(arr: &[u32]) -> usize {
   return res;
 }
 
-//functions to get value of specific bit in number
 
 /*fn gBit(num:u8, ind:u32) -> u32{
   (num>>ind)&1
 }*/
 
+///functions to get value of specific bit in number
 fn gBit(num:u32, ind:u32) -> u32{
   (num>>ind)&1
 }
@@ -118,23 +120,23 @@ fn gBit(num:u32, ind:u32) -> u32{
   return bytes;
 }*/
 
-//function to calculate length of string not by bytes but by characters, including UTF-8 characters
+///function to calculate length of string not by bytes but by characters, including UTF-8 characters
 
 fn calcLen(str:&String) -> usize {
   str.chars().count()
 }
 
-//function to deencode string that contains UTF-8 characters and returns Vector with codepoints of characters
+///function to deencode string that contains UTF-8 characters and returns Vector with codepoints of characters
 
 pub fn UTF8_den( string:&String ) -> Vec<u32> {
   string.chars().map(|c| c as u32).collect::<Vec<u32>>()
 }
 
-//function to encode bytes in UTF-8 characters, recives array of bytes and length of that array, and returns vector with codepoints with data stored in it
+///function to encode bytes in UTF-8 characters, recives array of bytes and length of that array, and returns vector with codepoints with data stored in it
 
 pub fn enSten(arr: &[u8]) -> Vec<char> {
   let len:usize=arr.len();
-  let enLen:usize=(len*2)/3+(if(len*2)%3>0 {1} else {0});//getEnLen(len);
+  let enLen:usize=(len*2)/3+ ((len*2)%3>0) as usize;//getEnLen(len);
 
   let mut res:Vec<char>=vec![0 as char;enLen];
 
@@ -163,7 +165,7 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
       bitsPass=0;
       i += 1;
 
-    } else if bits>cary {
+    } else {
       subB=12;
       //codePoint|=((arr[i]>>bitsPass)&((1<<cary)-1))<<shift;
       codePoint|=(((arr[i] as u32)>>bitsPass)&(!(FFU32<<cary)))<<shift;
@@ -182,17 +184,65 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
     subB%=12;
   }
 
+  if dataI < enLen {
+    res.truncate(dataI);
+  }
+
   return res;
 }
 
-//function to decode data from codepoints
-//decodes result of enSten function
+///function to encode bytes in UTF-8 characters, recives array of bytes and length of that array, and returns vector with codepoints with data stored in it
+///secont, more efficient encoding methode
+/**works reliably with ascii table values (x<=0x7f)
+* other byte values are just gamble
+*/
+
+pub fn enSten2(arr: &[u8]) -> Vec<char> {
+  let len:usize=arr.len();
+  let flen:usize=len-(len&1);
+  let enLen:usize=(len>>1)+(len&1);
+
+  let mut res:Vec<char>=vec![0 as char;enLen];
+
+  let mut codePoint:u32=0x020000;
+  let mut dataI:usize=0;
+  let mut i:usize=0;
+
+  while i<flen {
+    if i&1==1 {
+      codePoint|=(arr[i] as u32)<<8;
+      res[dataI]=char::from_u32(codePoint).expect(format!("data cannot be encoded in second format, cause of problem around {i} input byte").as_str());
+      dataI+=1;
+      i+=1;
+      codePoint=0x020000;
+      continue;
+    }
+    codePoint|=arr[i] as u32;
+    i+=1;
+  }
+  
+  if i<len {
+    res[dataI]=char::from_u32(0x100 as u32 | arr[i] as u32).unwrap();
+    dataI+=1;
+    i+=1;
+  }
+
+  if dataI < enLen {
+    res.truncate(dataI);
+  }
+
+  return res;
+}
+
+///function to decode data from codepoints
+///decodes result of enSten and enSten2 functions
 
 pub fn deSten(arr:&[u32]) -> Vec<u8> {
   let len:usize=arr.len();
   
+  let deLen=len*2;
 
-  let mut res:Vec<u8>=vec![0;(len*3)/2 + if (len*3)%2>0 {1} else {0}];
+  let mut res:Vec<u8>=vec![0;deLen];
 
   let mut dataI:usize=0;
   let mut bits:u8;
@@ -211,8 +261,12 @@ pub fn deSten(arr:&[u32]) -> Vec<u8> {
     if arr[i]<=0x8fff && arr[i]>=0x8000 {
       bits=12;
       proc=true;
-
-    } else if arr[i]<=0x8ff && arr[i]>=0x800 {
+    
+    } else if arr[i]<=0x02ffff && arr[i]>=0x020000 {
+      bits=16;
+      proc=true;
+    
+    } else if arr[i]<=0x1ff && arr[i]>=0x100 {
       bits=8;
       proc=true;
       
@@ -248,8 +302,73 @@ pub fn deSten(arr:&[u32]) -> Vec<u8> {
 
   }
 
+  if dataI < deLen {
+    res.truncate(dataI);
+  }
+
   return res;
 
+}
+
+///function to decode data from codepoints, second version of encoding
+///it's more optimized specifically for decoding second version
+///only decodes result of enSten2 function
+
+pub fn deSten2(arr:&[u32]) -> Vec<u8> {
+  let len:usize=arr.len();
+  
+  let deLen=len*2;
+
+  let mut res:Vec<u8>=vec![0;deLen];
+
+  let mut dataI:usize=0;
+
+
+  for i in 0..len {
+
+    match &arr[i] {
+      x @ 0x020000..=0x02ffff => {
+        res[dataI]=*x as u8;
+        res[dataI+1]=(*x>>8) as u8;
+        dataI+=2;
+      },
+
+      x @ 0x00..=0x1ff => {
+        res[dataI]=*x as u8;
+        dataI+=1;
+      },
+      _ => {},
+    }
+    
+  }
+
+  if dataI < deLen {
+    res.truncate(dataI);
+  }
+
+  return res;
+
+}
+
+pub mod Block {
+  const V2_ST_VOID1:u32 = 42720;
+
+  pub fn v2_encode_valid(arr:&[u8]) -> bool {
+    let len:usize=arr.len();
+    let flen:usize=len>>1;
+
+    let mut i:usize=0;
+
+    while i<flen {
+      let code:u32=(arr[i] as u32) | ((arr[i+1] as u32)<<8);
+      if code>=V2_ST_VOID1 {
+        return false;
+      }
+      i+=2;
+    }
+
+    return true;
+  }
 }
 
 #[cfg(test)]
