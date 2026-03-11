@@ -33,6 +33,7 @@ fn main() {
       let mut read_len:usize;
 
       loop{
+        //let mut start=Instant::now();
         read_len=0;
 
         //this loop ensures that buffer is full except last chunk of data
@@ -51,15 +52,18 @@ fn main() {
         if read_len==0 {
           break
         }
+        //eprintln!("reading: {:?}", start.elapsed());
 
+        //start=Instant::now();
         let result:String = UTF8::enSten(&buff[..read_len]).iter().collect();
         let _ = stdout.write_all(result.as_bytes());
+        //eprintln!("encoding: {:?}", start.elapsed());
 
         //quits loop after reaching last chunk of data
         if read_len<BUFF_SIZE {
           break
         }
-
+        
       }
       println!("");
 

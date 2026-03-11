@@ -153,6 +153,7 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
     if bits<=0 {
       bits=8;
     }
+
     cary=12-subB;
     shift=subB;
 
@@ -205,7 +206,7 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
 
 pub fn enSten2(arr: &[u8]) -> Vec<char> {
   let len:usize=arr.len();
-  let flen:usize=len-(len&1);
+  let flen:usize=len^(len&1);
   let enLen:usize=(len>>1)+(len&1);
 
   let mut res:Vec<char>=vec![0 as char;enLen];

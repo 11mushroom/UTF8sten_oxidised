@@ -18,7 +18,7 @@
 
 use std::io::{Write,Read};
 
-const BUFF_SIZE:usize=510;
+const BUFF_SIZE:usize=516;
 
 fn main() {
     let args:Vec<String>=std::env::args().collect();
