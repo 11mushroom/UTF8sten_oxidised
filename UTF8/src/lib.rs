@@ -33,7 +33,9 @@ const RMASK3 :u32=0b11100000;
 const RMASK4 :u32=0b11110000;
 const RMASK5 :u32=0b11111000;
 
-const ENC1BT_BASE:u32=0x100 ; //base for encoding single byte
+const ENC1BT_BASE:u32=0x00100 ; //base for encoding single byte
+const ENC12B_BASE:u32=0x08000 ; //base for encoding 12 bits
+const ENC2BT_BASE:u32=0x20000 ; //base for encoding 2 bytes
 
 ///function to calculate amount of encoded data will take in bytes
 
@@ -132,8 +134,53 @@ pub fn UTF8_den( string:&String ) -> Vec<u32> {
 }
 
 ///function to encode bytes in UTF-8 characters, recives array of bytes and length of that array, and returns vector with codepoints with data stored in it
+///uses new way to encode, which can be faster
 
 pub fn enSten(arr: &[u8]) -> Vec<char> {
+  let len:usize=arr.len();
+  let enLen:usize=(len/3)*2+ len%3;
+  let normal_len:usize=len-len%3;
+
+  let mut res:Vec<char>=vec![0 as char;enLen];
+
+  let mut dataI:usize=0;
+  let mut i:usize=0;
+  let mut buff:u32;
+
+  unsafe {
+    while i < normal_len {
+        // store source 3 bytes in buffer to process it later
+        buff=u32::from_le_bytes([arr[i], arr[i+1], arr[i+2], 0]);
+
+        // the range of codepoints 0x8000-0x8fff is entirely valid
+        // so we don't need validation
+        res[dataI]=char::from_u32_unchecked(ENC12B_BASE|( buff     &0x0fff));
+        dataI+=1;
+
+        res[dataI]=char::from_u32_unchecked(ENC12B_BASE|((buff>>12)&0x0fff));
+        dataI+=1;
+
+        i+=3;
+    }
+
+    while i<len {
+      res[dataI]=char::from_u32_unchecked(ENC1BT_BASE|arr[i] as u32);
+      i+=1;
+      dataI+=1;
+    }
+  }
+
+  if dataI < enLen {
+    res.truncate(dataI);
+  }
+
+  return res;
+}
+
+///function to encode bytes in UTF-8 characters, recives array of bytes and length of that array, and returns vector with codepoints with data stored in it
+///uses old way to encode which can be slower
+
+pub fn legacy_enSten(arr: &[u8]) -> Vec<char> {
   let len:usize=arr.len();
   let enLen:usize=(len/3)*2+ len%3;
   let normal_len:usize=len-len%3;
@@ -206,30 +253,24 @@ pub fn enSten(arr: &[u8]) -> Vec<char> {
 
 pub fn enSten2(arr: &[u8]) -> Vec<char> {
   let len:usize=arr.len();
-  let flen:usize=len^(len&1);
-  let enLen:usize=(len>>1)+(len&1);
+  let flen:usize=len^(len&1); // len - len%2
+  let enLen:usize=(len>>1)+(len&1); // (len/2)+(len%2)
 
   let mut res:Vec<char>=vec![0 as char;enLen];
 
-  let mut codePoint:u32=0x020000;
-  let mut dataI:usize=0;
   let mut i:usize=0;
+  let mut dataI:usize=0;
 
-  while i<flen {
-    if i&1==1 {
-      codePoint|=(arr[i] as u32)<<8;
-      res[dataI]=char::from_u32(codePoint).expect(format!("data cannot be encoded in second format, cause of problem around {i} input byte").as_str());
+  while i < flen {
+      // i|1 == i+1
+      res[dataI]=char::from_u32(ENC2BT_BASE|u32::from_le_bytes([arr[i],arr[i|1],0,0])) 
+                        .expect(format!("data cannot be encoded in second format, cause of problem around {i} input byte").as_str());
+      i+=2;
       dataI+=1;
-      i+=1;
-      codePoint=0x020000;
-      continue;
-    }
-    codePoint|=arr[i] as u32;
-    i+=1;
   }
   
   if i<len {
-    res[dataI]=char::from_u32(0x100 as u32 | arr[i] as u32).unwrap();
+    res[dataI]=unsafe{char::from_u32_unchecked(ENC1BT_BASE | arr[i] as u32)};
     dataI+=1;
     i+=1;
   }
@@ -367,7 +408,7 @@ pub mod Block {
     let mut i:usize=0;
 
     while i<flen {
-      let code:u32=(arr[i] as u32) | ((arr[i+1] as u32)<<8);
+      let code:u32=u32::from_le_bytes([arr[i],arr[i|1],0,0]);
       if code>=V2_ST_VOID1 {
         return false;
       }

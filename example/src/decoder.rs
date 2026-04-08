@@ -18,29 +18,29 @@
 
 use std::io::{Write,Read};
 
+// buffer size must be dividible by both 6 and 4 to support v1 and v2
 const BUFF_SIZE:usize=516;
 
 fn main() {
     let args:Vec<String>=std::env::args().collect();
-    let mut stdout=std::io::stdout();
+    let mut stdout=std::io::stdout().lock();
 
     let force_lossy_decode=false;
 
     if args.len()<2 {
-      let mut stdin=std::io::stdin();
+      let mut stdin=std::io::stdin().lock();
 
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
-      loop{
+      'denc_l:loop{
         let mut read_len:usize = 0;
-        loop { 
-          read_len += match stdin.read(&mut buff[read_len..]){
+
+        while read_len<BUFF_SIZE {
+          match stdin.read(&mut buff[read_len..]){
+            Ok(0) if read_len==0 => break 'denc_l,
             Ok(0) => break,
-            Ok(n) => n,
-            Err(e) => panic!("wtf {}", e)
+            Ok(n) => read_len+=n,
+            Err(e) => panic!("what happened? {}", e)
           };
-          if read_len>=BUFF_SIZE {
-            break
-          }
         }
         //eprintln!("read {} bytes", read_len);
 

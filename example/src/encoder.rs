@@ -17,8 +17,9 @@
 */
 
 //use std::time::Instant;
-use std::io::{Write,Read};
+use std::io::{Read, Write};
 
+// buffer size must be 3*x for best efficiency with v1
 const BUFF_SIZE:usize=510;
 
 fn main() {
@@ -26,32 +27,27 @@ fn main() {
     let args:Vec<String>=std::env::args().collect();
 
     if args.len()<2 {
-      let mut stdin=std::io::stdin();
-      let mut stdout=std::io::stdout();
-
+      let mut stdin=std::io::stdin().lock();
+      let mut stdout=std::io::stdout().lock();
+      
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
       let mut read_len:usize;
 
-      loop{
+      'enc_l:loop{
         //let mut start=Instant::now();
         read_len=0;
 
         //this loop ensures that buffer is full except last chunk of data
-        loop { 
-          read_len += match stdin.read(&mut buff[read_len..]){
+        while read_len<BUFF_SIZE {
+          match stdin.read(&mut buff[read_len..]){
+            Ok(0) if read_len==0 => break 'enc_l,
             Ok(0) => break,
-            Ok(n) => n,
-            Err(e) => panic!("wtf {}", e)
+            Ok(n) => read_len+=n,
+            Err(e) => panic!("what happened? {}", e)
           };
-          if read_len>=BUFF_SIZE {
-            break
-          }
         }
         /*eprintln!("read {} bytes", read_len);*/
 
-        if read_len==0 {
-          break
-        }
         //eprintln!("reading: {:?}", start.elapsed());
 
         //start=Instant::now();
