@@ -3,6 +3,13 @@ tools to store data in unicode symbols
 it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
 `UTF8` in repository is a library with tools to store and get data
 
+# Web
+
+there is Web [page](https://utf8sten.github.io/) with encoder/decoder
+for both v1 and v2 versions, where you can use it right in your browser
+
+Note: _your browser needs to support Wasm_
+
 # Building
 
 - clone repository if not already cloned
