@@ -16,7 +16,7 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::io::{Write,Read};
+use std::io::{Write,Read,IsTerminal};
 
 // buffer size must be dividible by 4 to support v2
 const BUFF_SIZE:usize=512;
@@ -64,11 +64,14 @@ fn main() {
         }
 
       }
-      println!("");
 
     } else {
       let destenned:Vec<u8>=UTF8::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>());
       let _ = stdout.write_all(&destenned);
+    }
+
+    //don't pipe \n when output piped/redirected
+    if std::io::stdout().is_terminal() {
       println!("");
     }
 }

@@ -17,7 +17,7 @@
 */
 
 //use std::time::Instant;
-use std::io::{Read, Write};
+use std::io::{Read, Write, IsTerminal};
 
 // buffer size must be 3*x for best efficiency with v1
 const BUFF_SIZE:usize=510;
@@ -61,12 +61,16 @@ fn main() {
         }
         
       }
-      println!("");
 
     } else {
       let enstenned:Vec<char>=UTF8::enSten(args[1].as_bytes());
-      println!("{}", enstenned.iter().collect::<String>());
+      print!("{}", enstenned.iter().collect::<String>());
 
+    }
+
+    //don't pipe \n when output piped/redirected
+    if std::io::stdout().is_terminal() {
+      println!("");
     }
     //eprintln!("main function were running {:?}", start.elapsed());
 }

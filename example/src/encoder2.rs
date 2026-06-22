@@ -17,7 +17,7 @@
 */
 
 //use std::time::Instant;
-use std::io::{Write,Read};
+use std::io::{Write,Read,IsTerminal};
 use UTF8::Block;
 
 // buffer size must be 2*x for best efficiency with v2
@@ -65,7 +65,6 @@ fn main() {
         }
 
       }
-      println!("");
 
     } else {
       //checks if data can be encoded in a valid output
@@ -77,8 +76,13 @@ fn main() {
       }
 
       let enstenned:Vec<char>=UTF8::enSten2(args[1].as_bytes());
-      println!("{}", enstenned.iter().collect::<String>());
+      print!("{}", enstenned.iter().collect::<String>());
 
+    }
+
+    //don't pipe \n when output piped/redirected
+    if std::io::stdout().is_terminal() {
+      println!("");
     }
     //eprintln!("main function were running {:?}", start.elapsed());
 }
