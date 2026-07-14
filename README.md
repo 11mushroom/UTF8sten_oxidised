@@ -1,70 +1,55 @@
-# description
-tools to store data in unicode symbols
-it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
-`UTF8` in repository is a library with tools to store and get data
+# About
+UTF8sten is an encoder that allows to store more data in a smaller amount of characters.
+
+This project is a Rust rewrite of [UTF8sten](https://github.com/11mushroom/UTF8sten.git).
+
+Additionally, a library is provided in the folder [UTF8](UTF8).
 
 # Web
+There is a [webpage](https://utf8sten.github.io/) with the encoders and decoders found in this project.
 
-there is Web [page](https://utf8sten.github.io/) with encoder/decoder
-for both v1 and v2 versions, where you can use it right in your browser
-
-Note: _your browser needs to support Wasm_
+Note: _Your browser needs to support WebAssembly_.
 
 # Building
 
-- clone repository if not already cloned
   ```
-  git clone httos://github.com/11mushroom/UTF8sten_oxidised.git
-  ```
-
-- to build encoders and decoders:
-  
-  go to the `example` directory
-  ```
+  git clone https://github.com/11mushroom/UTF8sten_oxidised.git
   cd example
-  ```
-
-  and build it with cargo
-  ```
   cargo build --release
   ```
 
-  `encoder`,`encoder2` and `decoder`,`decoder2` binaries will be in `example/target/release` directory
+  `encoder`, `encoder2`, `decoder`, and `decoder2` binaries will be in `example/target/release` directory.
 
-# usage of encoder and decoder scripts
+# Usage of encoder and decoder scripts
   ```bash
-  ./encoder "your message"
+  ./encoder "original message"
   ```
-  it will print text, which can be given to decoder to get your message back
+  It will output text, which can be given to decoder to get your message back:
   ```bash
-  ./decoder "text which encoder gave you"
+  ./decoder "encoded message"
   ```
 
-  example:
+  for example:
   ```bash
   $ ./encoder "fabric"
   腦蘦襲蘶
   $ ./decoder "腦蘦襲蘶"
   fabric
   ```
-  text which encoder gives you doesn't have any meaning in any language
+  Text which the encoder gives you doesn't have any meaning in any language.
 
-  also you can pipe data in, eg.
+  Data can be also piped in:
   ```bash
   $ echo "fabric"|./encoder
   腦蘦襲蘶
   $ echo "腦蘦襲蘶"|./decoder
   fabric
-  ```
-  also you can do this
-  ```bash
   $ echo "fabric"|./encoder|./decoder
   fabric
-
   ```
 
-# usage of encoder2 and decoder2 scripts
-  almost the same as usage of `encoder` and `decoder`
+# Usage of encoder2 and decoder2 scripts
+  The same as usage of `encoder` and `decoder`.
 
-  `decoder` can decode output of both `encoder` and `encoder2`
+  `decoder` can decode output of both the `encoder` and `encoder2` scripts.
 
