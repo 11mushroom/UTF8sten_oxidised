@@ -16,8 +16,12 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use core::slice;
 //use std::time::Instant;
-use std::io::{Read, Write, IsTerminal};
+use std::{char};
+use std::io::{Read, Write, IsTerminal, BufWriter, BufReader};
+
+use UTF8::{en_len_chrs, char_slice_to_utf8_unchecked};
 
 // buffer size must be 3*x for best efficiency with v1
 const BUFF_SIZE:usize=510;
@@ -27,11 +31,13 @@ fn main() {
     let args:Vec<String>=std::env::args().collect();
 
     if args.len()<2 {
-      let mut stdin=std::io::stdin().lock();
-      let mut stdout=std::io::stdout().lock();
+      let mut stdin=BufReader::new(std::io::stdin().lock());
+      let mut stdout=BufWriter::new(std::io::stdout().lock());
       
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
+      let mut out_buff:Vec<char>=vec![0 as char;en_len_chrs(BUFF_SIZE)];
       let mut read_len:usize;
+      let mut write_len:usize;
 
       'enc_l:loop{
         //let mut start=Instant::now();
@@ -51,8 +57,18 @@ fn main() {
         //eprintln!("reading: {:?}", start.elapsed());
 
         //start=Instant::now();
-        let result:String = UTF8::enSten(&buff[..read_len]).iter().collect();
-        let _ = stdout.write_all(result.as_bytes());
+        write_len = unsafe { UTF8::enSten_to(&buff[..read_len], &mut out_buff) };
+
+        let _ = stdout.write_all(unsafe {
+                slice::from_raw_parts(
+                    out_buff.as_ptr() as *const u8,
+                    //returns length of written utf8 bytes
+                    char_slice_to_utf8_unchecked(
+                        out_buff.as_ptr(), write_len,
+                        out_buff.as_mut_ptr() as *mut u8
+                    )
+                )
+            });
         //eprintln!("encoding: {:?}", start.elapsed());
 
         //quits loop after reaching last chunk of data
@@ -61,6 +77,7 @@ fn main() {
         }
         
       }
+      let _ = stdout.flush();
 
     } else {
       let enstenned:Vec<char>=UTF8::enSten(args[1].as_bytes());
