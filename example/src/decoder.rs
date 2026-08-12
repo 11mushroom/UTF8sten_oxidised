@@ -31,6 +31,8 @@ fn main() {
       let mut stdin=std::io::stdin().lock();
 
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
+      let mut codepoints:Vec<u32>=vec![0;BUFF_SIZE];
+
       'denc_l:loop{
         let mut read_len:usize = 0;
 
@@ -45,20 +47,23 @@ fn main() {
         //eprintln!("read {} bytes", read_len);
 
 
-        let codepoints:Vec<u32>=match String::from_utf8(Vec::from(&buff[..read_len])) {
-            Ok(s) => s.chars().map(|c| c as u32).collect::<Vec<u32>>(),
+        codepoints=match String::from_utf8(Vec::from(&buff[..read_len])) {
+            Ok(s) => s.chars().map(|c| c as u32).collect(),
             Err(e) => if force_lossy_decode {
                         String::from_utf8_lossy(&buff[..read_len]).chars().map(|c| c as u32).collect::<Vec<u32>>()
                       } else {
-                        println!("failed to convert raw bytes into ecceptable for decoder format");
+                        println!("failed to convert raw bytes into acceptable for decoder format");
                         println!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
                         println!("to enable it, change value of `force_lossy_decode` variable to `true`");
                         panic!("{}", e);
                       }
           };
 
-        let result:Vec<u8> = UTF8::deSten(&codepoints);
-        let _ = stdout.write_all(&result);
+        // reuse buffer
+        // safe to reuse buff because
+        // decoded data is always smaller than encoded
+        let result_len = unsafe { UTF8::deSten_to(&codepoints, &mut buff)};
+        let _ = stdout.write_all(&buff[..result_len]);
 
         if read_len<BUFF_SIZE {
           break
