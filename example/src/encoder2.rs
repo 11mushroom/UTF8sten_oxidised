@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -19,8 +19,7 @@
 //use std::time::Instant;
 use core::slice;
 use std::io::{Write, Read, IsTerminal, BufWriter, BufReader};
-use UTF8::{char_slice_to_utf8_unchecked};
-use UTF8::Block;
+use utf8sten::{char_slice_to_utf8_unchecked, enSten2_to, enSten2, v2_encode_valid};
 
 // buffer size must be 2*x for best efficiency with v2
 const BUFF_SIZE:usize=512;
@@ -53,14 +52,14 @@ fn main() {
         /*eprintln!("read {} bytes", read_len);*/
 
         //checks if data can be encoded in a valid output
-        if !Block::v2_encode_valid(&buff[..read_len]) {
+        if !v2_encode_valid(&buff[..read_len]) {
           eprintln!("cannot be encoded with second version");
           eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2 to work correctly");
           eprintln!("or use v1 encoder");
           return;
         }
 
-        write_len = unsafe { UTF8::enSten2_to(&buff[..read_len], &mut out_buff) };
+        write_len = unsafe { enSten2_to(&buff[..read_len], &mut out_buff) };
         let _ = stdout.write_all(unsafe {
                 slice::from_raw_parts(
                     out_buff.as_ptr() as *const u8,
@@ -82,14 +81,14 @@ fn main() {
 
     } else {
       //checks if data can be encoded in a valid output
-      if !Block::v2_encode_valid(args[1].as_bytes()) {
+      if !v2_encode_valid(args[1].as_bytes()) {
         eprintln!("cannot be encoded with second version");
         eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2");
         eprintln!("or use v1 encoder");
         return;
       }
 
-      let enstenned:Vec<char>=UTF8::enSten2(args[1].as_bytes());
+      let enstenned:Vec<char>=enSten2(args[1].as_bytes());
       print!("{}", enstenned.iter().collect::<String>());
 
     }

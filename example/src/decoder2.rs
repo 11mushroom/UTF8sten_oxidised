@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -16,10 +16,8 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use core::error;
+use core::{slice};
 use std::io::{Write,Read,IsTerminal};
-
-use UTF8::en2_len_chrs;
 
 // buffer size must be dividible by 4 to support v2
 const BUFF_SIZE:usize=512;
@@ -51,7 +49,9 @@ fn main() {
         codepoints=match String::from_utf8(Vec::from(&buff[..read_len])) {
             Ok(s) => s.chars().map(|c| c as u32).collect(),
             Err(e) => if force_lossy_decode {
-                        String::from_utf8_lossy(&buff[..read_len]).chars().map(|c| c as u32).collect::<Vec<u32>>()
+                        unsafe { 
+                            std::mem::transmute(String::from_utf8_lossy(&buff[..read_len]).chars().collect::<Vec<char>>())
+                        }
                       } else {
                         eprintln!("failed to convert raw bytes into ecceptable for decoder format");
                         eprintln!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
@@ -63,8 +63,8 @@ fn main() {
         // reuse buffer
         // safe to reuse buff because
         // decoded data is always smaller than encoded
-        let result_len = unsafe { UTF8::deSten2_to(&codepoints, &mut buff)};
-        let _ = stdout.write_all(&buff[..result_len]);
+        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_ptr() as *mut u8)};
+        let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {
           break
@@ -73,7 +73,7 @@ fn main() {
       }
 
     } else {
-      let destenned:Vec<u8>=UTF8::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>());
+      let destenned:Vec<u8>=utf8sten::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>()).unwrap();
       let _ = stdout.write_all(&destenned);
     }
 

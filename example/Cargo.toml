@@ -20,4 +20,4 @@ name="decoder2"
 path="src/decoder2.rs"
 
 [dependencies]
-UTF8={path="../UTF8"}
+utf8sten={git="https://github.com/11mushroom/UTF8sten_lib_oxidised", rev = "a6370d0b8b11006c7fa9bbf4fdc5279e00211224"}

@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 */
 
 use std::io::{Write,Read,IsTerminal};
+use core::slice;
 
 // buffer size must be dividible by both 6 and 4 to support v1 and v2
 const BUFF_SIZE:usize=516;
@@ -62,8 +63,8 @@ fn main() {
         // reuse buffer
         // safe to reuse buff because
         // decoded data is always smaller than encoded
-        let result_len = unsafe { UTF8::deSten_to(&codepoints, &mut buff)};
-        let _ = stdout.write_all(&buff[..result_len]);
+        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_ptr() as *mut u8)};
+        let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {
           break
@@ -72,7 +73,7 @@ fn main() {
       }
 
     } else {
-      let destenned:Vec<u8>=UTF8::deSten(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>());
+      let destenned:Vec<u8>=utf8sten::deSten(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>()).expect("test");
       let _ = stdout.write_all(&destenned);
     }
 

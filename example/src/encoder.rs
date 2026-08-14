@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,7 @@ use core::slice;
 //use std::time::Instant;
 use std::{char};
 use std::io::{Read, Write, IsTerminal, BufWriter, BufReader};
-
-use UTF8::{en_len_chrs, char_slice_to_utf8_unchecked};
+use utf8sten::{enSten_to, enSten, en_len_chrs, char_slice_to_utf8_unchecked};
 
 // buffer size must be 3*x for best efficiency with v1
 const BUFF_SIZE:usize=510;
@@ -57,7 +56,7 @@ fn main() {
         //eprintln!("reading: {:?}", start.elapsed());
 
         //start=Instant::now();
-        write_len = unsafe { UTF8::enSten_to(&buff[..read_len], &mut out_buff) };
+        write_len = unsafe { enSten_to(&buff[..read_len], &mut out_buff) };
 
         let _ = stdout.write_all(unsafe {
                 slice::from_raw_parts(
@@ -80,7 +79,7 @@ fn main() {
       let _ = stdout.flush();
 
     } else {
-      let enstenned:Vec<char>=UTF8::enSten(args[1].as_bytes());
+      let enstenned:Vec<char>=enSten(args[1].as_bytes());
       print!("{}", enstenned.iter().collect::<String>());
 
     }
