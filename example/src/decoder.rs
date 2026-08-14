@@ -63,7 +63,7 @@ fn main() {
         // reuse buffer
         // safe to reuse buff because
         // decoded data is always smaller than encoded
-        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_ptr() as *mut u8)};
+        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_mut_ptr() as *mut u8)};
         let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {
