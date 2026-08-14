@@ -51,7 +51,9 @@ fn main() {
         codepoints=match String::from_utf8(Vec::from(&buff[..read_len])) {
             Ok(s) => s.chars().map(|c| c as u32).collect(),
             Err(e) => if force_lossy_decode {
-                        String::from_utf8_lossy(&buff[..read_len]).chars().map(|c| c as u32).collect::<Vec<u32>>()
+                        unsafe { 
+                            std::mem::transmute(String::from_utf8_lossy(&buff[..read_len]).chars().collect::<Vec<char>>())
+                        }
                       } else {
                         println!("failed to convert raw bytes into acceptable for decoder format");
                         println!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
@@ -63,7 +65,7 @@ fn main() {
         // reuse buffer
         // safe to reuse buff because
         // decoded data is always smaller than encoded
-        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_mut_ptr() as *mut u8)};
+        let result_len = unsafe { utf8sten::deSten_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_mut_ptr() as *mut u8)};
         let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {
