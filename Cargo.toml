@@ -1,6 +1,6 @@
 [package]
 name = "example"
-version = "0.2.0"
+version = "1.0.0"
 edition = "2024"
 
 [[bin]]
@@ -20,4 +20,4 @@ name="decoder2"
 path="src/decoder2.rs"
 
 [dependencies]
-utf8sten={git="https://github.com/11mushroom/UTF8sten_lib_oxidised", rev = "a6370d0b8b11006c7fa9bbf4fdc5279e00211224"}
+utf8sten={git="https://github.com/11mushroom/UTF8sten_lib_oxidised.git", tag = "1.0.0"}

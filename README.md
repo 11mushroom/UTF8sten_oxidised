@@ -1,7 +1,6 @@
-# description
-tools to store data in unicode symbols
-it's [UTF8sten](https://github.com/11mushroom/UTF8sten.git) written in Rust
-`UTF8` in repository is a library with tools to store and get data
+# Description
+basic CLI tools to work with [utf8sten](https://github.com/11mushroom/UTF8sten_lib_oxidised)
+it's Rust rewrite of [C++ version of tools](https://github.com/11mushroom/UTF8sten)
 
 # Web
 
@@ -10,26 +9,23 @@ for both v1 and v2 versions, where you can use it right in your browser
 
 Note: _your browser needs to support Wasm_
 
+# Dependencies
+
+- [utf8sten rust library](https://github.com/11mushroom/UTF8sten_lib_oxidised)
+
 # Building
 
 - clone repository if not already cloned
   ```
-  git clone httos://github.com/11mushroom/UTF8sten_oxidised.git
+  git clone https://github.com/11mushroom/UTF8sten_oxidised.git
   ```
 
 - to build encoders and decoders:
-  
-  go to the `example` directory
-  ```
-  cd example
-  ```
-
-  and build it with cargo
   ```
   cargo build --release
   ```
 
-  `encoder`,`encoder2` and `decoder`,`decoder2` binaries will be in `example/target/release` directory
+  `encoder`,`encoder2` and `decoder`,`decoder2` binaries will be in `target/release` directory
 
 # usage of encoder and decoder scripts
   ```bash
@@ -65,6 +61,3 @@ Note: _your browser needs to support Wasm_
 
 # usage of encoder2 and decoder2 scripts
   almost the same as usage of `encoder` and `decoder`
-
-  `decoder` can decode output of both `encoder` and `encoder2`
-

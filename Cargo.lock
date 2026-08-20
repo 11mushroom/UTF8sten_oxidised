@@ -4,12 +4,12 @@ version = 4
 
 [[package]]
 name = "example"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "utf8sten",
 ]
 
 [[package]]
 name = "utf8sten"
-version = "0.2.0"
-source = "git+https://github.com/11mushroom/UTF8sten_lib_oxidised?rev=a6370d0b8b11006c7fa9bbf4fdc5279e00211224#a6370d0b8b11006c7fa9bbf4fdc5279e00211224"
+version = "1.0.0"
+source = "git+https://github.com/11mushroom/UTF8sten_lib_oxidised?tag=1.0.0#b9797b75e6bba4debe393702b30eaf7d3355289e"
