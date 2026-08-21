@@ -69,9 +69,9 @@ fn main() {
         if read_len<BUFF_SIZE {
           break
         }
-        let _ = stdout.flush();
 
       }
+      let _ = stdout.flush();
 
     } else {
       let destenned:Vec<u8>=utf8sten::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>()).unwrap();
