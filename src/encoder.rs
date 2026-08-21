@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -16,25 +16,30 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+use core::slice;
 //use std::time::Instant;
-use std::io::{Write,Read,IsTerminal};
-use UTF8::Block;
+use std::{char};
+use std::io::{Read, Write, IsTerminal, BufWriter, BufReader};
+use utf8sten::{enSten_to, enSten, en_len_chrs, char_slice_to_utf8_unchecked};
 
-// buffer size must be 2*x for best efficiency with v2
-const BUFF_SIZE:usize=512;
+// buffer size must be 3*x for block encoding with v1
+const BUFF_SIZE:usize=510;
 
 fn main() {
     //let start=Instant::now();
     let args:Vec<String>=std::env::args().collect();
 
     if args.len()<2 {
-      let mut stdin=std::io::stdin().lock();
-      let mut stdout=std::io::stdout().lock();
-
+      let mut stdin=BufReader::new(std::io::stdin().lock());
+      let mut stdout=BufWriter::new(std::io::stdout().lock());
+      
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
+      let mut out_buff:Vec<char>=vec![0 as char;en_len_chrs(BUFF_SIZE)];
       let mut read_len:usize;
+      let mut write_len:usize;
 
       'enc_l:loop{
+        //let mut start=Instant::now();
         read_len=0;
 
         //this loop ensures that buffer is full except last chunk of data
@@ -48,34 +53,33 @@ fn main() {
         }
         /*eprintln!("read {} bytes", read_len);*/
 
-        //checks if data can be encoded in a valid output
-        if !Block::v2_encode_valid(&buff[..read_len]) {
-          eprintln!("cannot be encoded with second version");
-          eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2 to work correctly");
-          eprintln!("or use v1 encoder");
-          return;
-        }
+        //eprintln!("reading: {:?}", start.elapsed());
 
-        let result:String = UTF8::enSten2(&buff[..read_len]).iter().collect();
-        let _ = stdout.write_all(result.as_bytes());
+        //start=Instant::now();
+        write_len = unsafe { enSten_to(&buff[..read_len], &mut out_buff) };
+
+        let _ = stdout.write_all(unsafe {
+                slice::from_raw_parts(
+                    out_buff.as_ptr() as *const u8,
+                    //returns length of written utf8 bytes
+                    char_slice_to_utf8_unchecked(
+                        out_buff.as_ptr(), write_len,
+                        out_buff.as_mut_ptr() as *mut u8
+                    )
+                )
+            });
+        //eprintln!("encoding: {:?}", start.elapsed());
 
         //quits loop after reaching last chunk of data
         if read_len<BUFF_SIZE {
           break
         }
-
+        
       }
+      let _ = stdout.flush();
 
     } else {
-      //checks if data can be encoded in a valid output
-      if !Block::v2_encode_valid(args[1].as_bytes()) {
-        eprintln!("cannot be encoded with second version");
-        eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2");
-        eprintln!("or use v1 encoder");
-        return;
-      }
-
-      let enstenned:Vec<char>=UTF8::enSten2(args[1].as_bytes());
+      let enstenned:Vec<char>=enSten(args[1].as_bytes());
       print!("{}", enstenned.iter().collect::<String>());
 
     }

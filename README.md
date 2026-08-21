@@ -1,24 +1,26 @@
 # About
-UTF8sten is an encoder that allows to store more data in a smaller amount of characters.
+basic CLI tools to work with [utf8sten](https://github.com/11mushroom/UTF8sten_lib_oxidised)
 
-This project is a Rust rewrite of [UTF8sten](https://github.com/11mushroom/UTF8sten.git).
-
-Additionally, a library is provided in the folder [UTF8](UTF8).
+this project is a Rust rewrite of [C++ version of tools](https://github.com/11mushroom/UTF8sten)
 
 # Web
 There is a [webpage](https://utf8sten.github.io/) with the encoders and decoders found in this project.
 
 Note: _Your browser needs to support WebAssembly_.
 
+# Dependencies
+
+- [utf8sten rust library](https://github.com/11mushroom/UTF8sten_lib_oxidised)
+
 # Building
 
   ```
   git clone https://github.com/11mushroom/UTF8sten_oxidised.git
-  cd example
+  cd UTF8sten_oxidised
   cargo build --release
   ```
 
-  `encoder`, `encoder2`, `decoder`, and `decoder2` binaries will be in `example/target/release` directory.
+  `encoder`, `encoder2`, `decoder`, and `decoder2` binaries will be in `target/release` directory.
 
 # Usage of encoder and decoder scripts
   ```bash
@@ -48,8 +50,5 @@ Note: _Your browser needs to support WebAssembly_.
   fabric
   ```
 
-# Usage of encoder2 and decoder2 scripts
-  The same as usage of `encoder` and `decoder`.
-
-  `decoder` can decode output of both the `encoder` and `encoder2` scripts.
-
+# usage of encoder2 and decoder2 scripts
+  almost the same as usage of `encoder` and `decoder`

@@ -1,5 +1,5 @@
 /*
-*   UTF8sten_osidised gives tools to store data in unicode symbols
+*   UTF8sten_oxidised gives very basic CLI tools to work with u8s(UTF8sten) encoding
 *   Copyright (C) 2025  11mushroom
 *
 *   This program is free software: you can redistribute it and/or modify
@@ -16,21 +16,23 @@
 *   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-use std::io::{Write,Read,IsTerminal};
+use core::{slice};
+use std::io::{Write, Read, IsTerminal, BufWriter, BufReader};
 
 // buffer size must be dividible by 4 to support v2
 const BUFF_SIZE:usize=512;
+const FORCE_LOSSY:bool=false;
 
 fn main() {
     let args:Vec<String>=std::env::args().collect();
-    let mut stdout=std::io::stdout().lock();
+    let mut stdout=BufWriter::new(std::io::stdout().lock());
 
-    let force_lossy_decode=false;
 
     if args.len()<2 {
-      let mut stdin=std::io::stdin().lock();
+      let mut stdin=BufReader::new(std::io::stdin().lock());
 
       let mut buff:[u8;BUFF_SIZE]=[0;BUFF_SIZE];
+      let mut codepoints:Vec<u32> = vec![0;BUFF_SIZE];
       'denc_l:loop{
         let mut read_len:usize = 0;
         while read_len<BUFF_SIZE {
@@ -44,30 +46,37 @@ fn main() {
         //eprintln!("read {} bytes", read_len);
 
 
-        let codepoints:Vec<u32>=match String::from_utf8(Vec::from(&buff[..read_len])) {
-            Ok(s) => s.chars().map(|c| c as u32).collect::<Vec<u32>>(),
-            Err(e) => if force_lossy_decode {
-                        String::from_utf8_lossy(&buff[..read_len]).chars().map(|c| c as u32).collect::<Vec<u32>>()
+        codepoints=match String::from_utf8(Vec::from(&buff[..read_len])) {
+            Ok(s) => s.chars().map(|c| c as u32).collect(),
+            Err(e) => if FORCE_LOSSY {
+                        unsafe { 
+                            std::mem::transmute(String::from_utf8_lossy(&buff[..read_len]).chars().collect::<Vec<char>>())
+                        }
                       } else {
-                        println!("failed to convert raw bytes into ecceptable for decoder format");
-                        println!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
-                        println!("to enable it, change value of `force_lossy_decode` variable to `true`");
+                        eprintln!("failed to convert raw bytes into ecceptable for decoder format");
+                        eprintln!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
+                        eprintln!("to enable it, change value of `force_lossy_decode` variable to `true`");
                         panic!("{}", e);
                       }
           };
 
-        let result:Vec<u8> = UTF8::deSten2(&codepoints);
-        let _ = stdout.write_all(&result);
+        // reuse buffer
+        // safe to reuse buff because
+        // decoded data is always smaller than encoded
+        let result_len = unsafe { utf8sten::deSten2_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_mut_ptr() as *mut u8)};
+        let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {
           break
         }
 
       }
+      let _ = stdout.flush();
 
     } else {
-      let destenned:Vec<u8>=UTF8::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>());
+      let destenned:Vec<u8>=utf8sten::deSten2(&args[1].chars().map(|c| c as u32).collect::<Vec<u32>>()).unwrap();
       let _ = stdout.write_all(&destenned);
+      let _ = stdout.flush();
     }
 
     //don't pipe \n when output piped/redirected
