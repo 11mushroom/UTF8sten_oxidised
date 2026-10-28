@@ -52,6 +52,7 @@ fn main() {
         /*eprintln!("read {} bytes", read_len);*/
 
         //checks if data can be encoded in a valid output
+        #[cfg(not(feature = "skip-checks"))]
         if !supports_v2_encode(&buff[..read_len]) {
           eprintln!("cannot be encoded with second version");
           eprintln!("you should probably remove non ascii characters and unicode or UTF8 encoded characters for v2 to work correctly");

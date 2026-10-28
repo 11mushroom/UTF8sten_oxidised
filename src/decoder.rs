@@ -21,7 +21,6 @@ use core::slice;
 
 // buffer size must be dividible by 6 to support v1, for 2 U+8000 symbols (3 encoded bytes) in utf8 take 6 bytes
 const BUFF_SIZE:usize=516;
-const FORCE_LOSSY:bool=false;
 
 fn main() {
     let args:Vec<String>=std::env::args().collect();
@@ -48,24 +47,38 @@ fn main() {
         //eprintln!("read {} bytes", read_len);
 
 
-        codepoints=match String::from_utf8(Vec::from(&buff[..read_len])) {
-            Ok(s) => s.chars().map(|c| c as u32).collect(),
-            Err(e) => if FORCE_LOSSY {
-                        unsafe { 
-                            std::mem::transmute(String::from_utf8_lossy(&buff[..read_len]).chars().collect::<Vec<char>>())
-                        }
-                      } else {
-                        eprintln!("failed to convert raw bytes into acceptable for decoder format");
-                        eprintln!("you can try to enable forcing convertion,\nwhich may result in some DATA LOSSES OR CORRUPTIONS");
-                        eprintln!("to enable it, change value of `force_lossy_decode` variable to `true`");
-                        panic!("{}", e);
-                      }
+        let cp_len:usize=cfg_select! {
+          feature = "skip-checks" => unsafe {
+              str::from_utf8_unchecked(&buff[..read_len]).chars()
+                .fold(0, |l, c| {
+                  codepoints[l]=c as u32;
+                  l+1
+                })
+          },
+          _ => {{
+            let ret=match str::from_utf8(&buff[..read_len]) {
+              Ok(s) => s.chars().fold(0, |l, c| {
+                    codepoints[l]=c as u32;
+                    l+1
+                }),
+              Err(e) => { 
+                eprintln!("failed to convert decode utf8 bytes");
+                eprintln!("you can try to bypass checks by compiling it with \"skip-checks\" feature");
+                panic!("{}", e);
+              }
+            };
+            if utf8sten::valid_en_v1(&codepoints[..ret]){
+              ret
+            } else {
+              panic!("invalid u8s v1 input data");
+            }
+          }}
           };
 
         // reuse buffer
         // safe to reuse buff because
         // decoded data is always smaller than encoded
-        let result_len = unsafe { utf8sten::deSten_to_raw_unchecked(codepoints.as_ptr(), codepoints.len(), codepoints.as_mut_ptr() as *mut u8)};
+        let result_len = unsafe { utf8sten::deSten_to_raw_unchecked(codepoints.as_ptr(), cp_len, codepoints.as_mut_ptr() as *mut u8)};
         let _ = stdout.write_all(unsafe { slice::from_raw_parts(codepoints.as_ptr() as *const u8, result_len)} );
 
         if read_len<BUFF_SIZE {

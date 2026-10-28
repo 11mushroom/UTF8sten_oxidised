@@ -22,6 +22,9 @@ Note: _Your browser needs to support WebAssembly_.
 
   `encoder`, `encoder2`, `decoder`, and `decoder2` binaries will be in `target/release` directory.
 
+  By default scripts perform some checks on input data.
+  Some of these checks can be disabled for stdin by enabling "skip-checks" feature.
+
 # Usage of encoder and decoder scripts
   ```bash
   ./encoder "original message"
